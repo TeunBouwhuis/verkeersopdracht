@@ -223,3 +223,103 @@ void InitializeIO(){
     *REG_STORAGE[2][0] |= (1 << PD1);
     *REG_STORAGE[2][1] &= ~(1 << PD1);
 }
+
+void display_counter(uint32_t count){
+    for(int COUNTER_INDEX = START; COUNTER_INDEX < maxCounters; COUNTER_INDEX++) {
+        if(count & (1 << COUNTER_INDEX)) {
+        *REG_STORAGE[Counters[COUNTER_INDEX].pointer[PIN_REGISTER]][PORT_X] |= (1 << Counters[COUNTER_INDEX].pointer[PIN_PIN]); 
+        } else {
+        *REG_STORAGE[Counters[COUNTER_INDEX].pointer[PIN_REGISTER]][PORT_X] &= ~(1 << Counters[COUNTER_INDEX].pointer[PIN_PIN]); 
+        }
+    }
+}
+
+uint8_t get_size(uint32_t number){
+    int numDigits = 0;
+    int tempCount = number;
+        while(tempCount != 0) {
+            tempCount /= 10;
+            numDigits++;
+    }
+    return numDigits;
+}
+
+void get_digits(uint32_t number){
+    digitAmount = get_size(number);
+    int temp = number;
+    for(int i = digitAmount - 1; i >= 0; i--) {
+        digits[i] = temp % 10;
+        temp = temp / 10;
+}
+}
+
+
+
+void display_speed() {
+    //weeooweewoo
+    int displayDigits[digitAmount];
+    for(int i = 0; i < digitAmount; i++) {
+        displayDigits[i] = digits[digitAmount - 1 - i];
+    }
+    
+    for (size_t CURRENT_DISPLAY = 0; CURRENT_DISPLAY < digitAmount; CURRENT_DISPLAY++) {
+        // alles uit
+        for (size_t i = 0; i < maxDisplayCs; i++) {
+            *REG_STORAGE[DisplayCs[i].pointer[PIN_REGISTER]][PORT_X] |= (1 << DisplayCs[i].pointer[PIN_PIN]);
+        }
+        
+        // goeie aan
+        *REG_STORAGE[DisplayCs[CURRENT_DISPLAY].pointer[PIN_REGISTER]][PORT_X] &= ~(1 << DisplayCs[CURRENT_DISPLAY].pointer[PIN_PIN]);
+        
+        // ctrl c ctrl v counter zooi
+        int segmentPattern = evilArray[displayDigits[CURRENT_DISPLAY]];
+        
+        for(int DISPLAY_INDEX = START; DISPLAY_INDEX < maxDisplays; DISPLAY_INDEX++) {
+            if(segmentPattern & (1 << DISPLAY_INDEX)) {
+                *REG_STORAGE[Displays[DISPLAY_INDEX].pointer[PIN_REGISTER]][PORT_X] |= (1 << Displays[DISPLAY_INDEX].pointer[PIN_PIN]); 
+            } else {
+                *REG_STORAGE[Displays[DISPLAY_INDEX].pointer[PIN_REGISTER]][PORT_X] &= ~(1 << Displays[DISPLAY_INDEX].pointer[PIN_PIN]); 
+            }
+            if (CURRENT_DISPLAY == 1) {
+            *REG_STORAGE[1][1]|= (1 << PC5);    // DP ON
+            } else {
+            *REG_STORAGE[1][1] &= ~(1 << PC5);   // DP OFF
+            }
+        }
+        
+        delay(5);
+    }
+}
+
+
+int main() {
+    init();
+    Serial.begin(9600); // Initialize serial communication
+    millis();
+    InitializeIO();
+    get_digits(1000);
+    // Configure PB5 as input
+
+    // Optional: Add external pull-down resistor to PB5
+
+    while (1) {
+        curTime = millis();
+        if (vehicle_passed()) {
+            Sensors[START].lastActivation = 0;
+            currentCount++;
+            if (currentCount > 15) {
+                currentCount = 0;
+            }
+
+            int speed = (60 * 100) / total_time;
+            get_digits(speed);
+            Serial.println(speed);
+
+        }
+        display_counter(currentCount);
+        display_speed();
+        delay(5);            
+    }
+
+    return 0;
+}
