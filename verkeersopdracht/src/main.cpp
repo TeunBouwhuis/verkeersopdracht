@@ -3,6 +3,36 @@
  #include <util/delay.h>
  #include <Arduino.h>
 
+ #define START 0
+ #define DDR_X 0
+ #define PORT_X 1
+ #define PIN_X 2
+
+ #define PIN_FUNCTION 0
+ #define PIN_REGISTER 1
+ #define PIN_PIN 2
+
+
+
+ #define ACTIVATION_INTERVAL 8000
+
+ #define TASK 0
+//  0 = 0111111 = 63
+//  1 = 0000110 = 6
+//  2 = 1011011 = 91
+//  3 = 1001111 = 79
+//  4 = 1100110 = 102
+//  5 = 1101101 = 109
+//  6 = 1111101 = 125
+//  7 = 0000111 = 7
+//  8 = 1111111 = 127
+//  9 = 1101111 = 111
+
+int evilArray[] = {63,6,91,79,102,109,125,7,127,111};
+uint8_t currentCount = 0;
+
+
+
 enum pinTypes{
     SENSOR,
     COUNTER,
